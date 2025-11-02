@@ -1,47 +1,28 @@
-# Prediction interface for Cog ⚙️
-# https://github.com/replicate/cog/blob/main/docs/python.md
+# Configuration for Cog ⚙️
+# Reference: https://github.com/replicate/cog/blob/main/docs/yaml.md
+build:
+  gpu: true
+  system_packages:
+    - "libgl1-mesa-glx"
+    - "libglib2.0-0"
+  python_version: "3.10"
+  python_packages:
+    - "torch==2.0.1"
+    - "torchvision"
+    - "numpy==1.26.4"
+    - "soundfile==0.12.1"
+    - "scipy==1.12.0"
+    - "tqdm==4.66.2"
+    - "librosa==0.10.1"
+    - "demucs==4.0.1"
+    - "onnxruntime-gpu==1.17.1"
+    - "PyQt5==5.15.10"
+    - "gradio==3.27.0"
+    - "matplotlib==3.8.3"
+  run:
+    - curl -o /usr/local/bin/pget -L "https://github.com/replicate/pget/releases/download/v0.5.6/pget_linux_x86_64" && chmod +x /usr/local/bin/pget
+    - pget -x https://weights.replicate.delivery/default/zfturbo/mvsep-mdx23.tar models/
+    - pget -x https://weights.replicate.delivery/default/zfturbo/mvsep-mdx23-checkpoints.tar /root/.cache/torch/hub/checkpoints/
 
-from cog import BasePredictor, Input, Path
-import os
-import time
-import subprocess
-from typing import List
-
-MODEL_CACHE = "models"
-MODEL_URL = "https://weights.replicate.delivery/default/zfturbo/mvsep-mdx23.tar"
-CHECKPOINTS_CACHE = "/root/.cache/torch/hub/checkpoints/"
-CHECKPOINTS_URL = "https://weights.replicate.delivery/default/zfturbo/mvsep-mdx23-checkpoints.tar"
-
-def download_weights(url, dest):
-    start = time.time()
-    print("downloading url: ", url)
-    print("downloading to: ", dest)
-    subprocess.check_call(["pget", "-x", url, dest], close_fds=False)
-    print("downloading took: ", time.time() - start)
-
-class Predictor(BasePredictor):
-    def setup(self) -> None:
-        """Load the model into memory to make running multiple predictions efficient"""
-        # Download models
-        if not os.path.exists(MODEL_CACHE):
-            download_weights(MODEL_URL, MODEL_CACHE)
-        if not os.path.exists(CHECKPOINTS_CACHE):
-            download_weights(CHECKPOINTS_URL, CHECKPOINTS_CACHE)
-
-    def predict(
-        self,
-        audio: Path = Input(description="Input Audio File"),
-    ) -> List[Path]:
-        """Run a single prediction on the model"""
-        # Clear past runs
-        output_folder = "/tmp/results/"
-        # Remove output folder if it exists
-        if os.path.exists(output_folder):
-            os.system("rm -rf " + output_folder)
-        # Run MVSEP subprocess
-        subprocess.run(["python", "inference.py", "--input_audio", str(audio), "--output_folder", output_folder], check=True)
-        # Get list of files in the output folder
-        files = os.listdir(output_folder)
-        # Return list of files
-        output_files = [Path(os.path.join(output_folder, file)) for file in files]
-        return output_files
+# predict.py defines how predictions are run on your model
+predict: "predict.py:Predictor"
