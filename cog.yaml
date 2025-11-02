@@ -1,6 +1,5 @@
 # Configuration for Cog ⚙️
 # Reference: https://github.com/replicate/cog/blob/main/docs/yaml.md
-
 build:
   gpu: true
   system_packages:
@@ -20,9 +19,10 @@ build:
     - "PyQt5==5.15.10"
     - "gradio==3.27.0"
     - "matplotlib==3.8.3"
-
   run:
     - curl -o /usr/local/bin/pget -L "https://github.com/replicate/pget/releases/download/v0.5.6/pget_linux_x86_64" && chmod +x /usr/local/bin/pget
+    - pget -x https://weights.replicate.delivery/default/zfturbo/mvsep-mdx23.tar models/
+    - pget -x https://weights.replicate.delivery/default/zfturbo/mvsep-mdx23-checkpoints.tar /root/.cache/torch/hub/checkpoints/
 
 # predict.py defines how predictions are run on your model
 predict: "predict.py:Predictor"
